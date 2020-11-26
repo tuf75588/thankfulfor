@@ -1,4 +1,5 @@
 /* eslint-disable import/no-unresolved */
+/* eslint-disable no-undef */
 /* eslint-disable import/extensions */
 
 import {
@@ -19,6 +20,51 @@ const App = {
       slug: '',
       from: '',
     });
+    watch(thanks, () => {
+      if (thanks.message.length > 280) {
+        thanks.message = thanks.message.slice(0, 280);
+      }
+    });
+    const createThanks = async () => {
+      error.value = '';
+      loading.value = true;
+      let { from } = thanks;
+      if (!thanks.slug) {
+        thanks.slug = undefined;
+      }
+      thanks.name = thanks.name.trim();
+      thanks.message = thanks.message.trim();
+      from = from.trim();
+      thanks.from = undefined;
+      const response = await fetch('/api/v1/thanks', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(thanks),
+      });
+      thanks.from = from;
+      const json = await response.json();
+      setTimeout(() => {
+        if (response.ok) {
+          let shareUrl = `${window.location.origin}/${json.slug}`;
+          if (from) {
+            shareUrl = `${shareUrl}?from=${from}`;
+          }
+          url.value = shareUrl;
+        } else {
+          error.value = json.message;
+        }
+        loading.value = false;
+      }, 2000);
+    };
+    return {
+      thanks,
+      createThanks,
+      error,
+      loading,
+      url,
+    };
   },
 };
 
